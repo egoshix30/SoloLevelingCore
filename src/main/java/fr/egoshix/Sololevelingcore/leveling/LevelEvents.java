@@ -31,7 +31,7 @@ public class LevelEvents {
         );
     }
 
-    private static final long ONE_DAY_MS = 24L * 60 * 60 * 1000; // 24h en millisecondes
+    private static final long ONE_DAY_MS = 24L * 60 * 60 * 1000;
 
     public static void broadcastSoloLeveling(String msg) {
         MinecraftServer server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
@@ -169,6 +169,36 @@ public class LevelEvents {
         }
     }
 
+    // ----------- FIX CLONE -----------
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        if (!event.getEntity().level().isClientSide()) {
+            LevelProvider oldProv = LevelCapability.get(event.getOriginal());
+            LevelProvider newProv = LevelCapability.get(event.getEntity());
+            if (oldProv != null && newProv != null) {
+                newProv.getData().copyFrom(oldProv.getData());
+                newProv.getStats().copyFrom(oldProv.getStats());
+                newProv.getDailyQuest().copyFrom(oldProv.getDailyQuest());
+            }
+        }
+    }
+
+    // ----------- SYNC LOGIN/RESPAWN -----------
+    @SubscribeEvent
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!event.getEntity().level().isClientSide()) {
+            LevelUtils.syncLevelToClient((ServerPlayer) event.getEntity());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!event.getEntity().level().isClientSide()) {
+            LevelUtils.syncLevelToClient((ServerPlayer) event.getEntity());
+        }
+    }
+
+    // ----------- COMMANDES -----------
     @SubscribeEvent
     public static void onCommand(RegisterCommandsEvent event) {
         event.getDispatcher().register(
@@ -311,35 +341,4 @@ public class LevelEvents {
                         })
         );
     }
-
-    @SubscribeEvent
-    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        Player player = event.getEntity();
-        LevelProvider prov = LevelCapability.get(player);
-        LevelData data = prov.getData();
-        String rank = RankUtils.getRankFromLevel(data.getLevel());
-        RankBonusUtils.applyBonusesForRank(player, rank);
-
-        DailyQuestData quest = prov.getDailyQuest();
-        long now = System.currentTimeMillis();
-        if ((quest.isCompleted() && (now - quest.getLastGenerated() >= ONE_DAY_MS)) || quest.getTarget() == 0) {
-            quest.generateNewQuest(data.getLevel());
-            player.sendSystemMessage(Component.literal("§6Nouvelle quête journalière ! (/dailyquest pour voir ton objectif)"));
-        }
-    }
-
-    // 🟣 LA FIX QUI GÈRE LE CLONE (copie à la mort)
-    @SubscribeEvent
-    public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
-        if (!event.getEntity().level().isClientSide()) {
-            LevelProvider oldProv = LevelCapability.get(event.getOriginal());
-            LevelProvider newProv = LevelCapability.get(event.getEntity());
-            if (oldProv != null && newProv != null) {
-                newProv.getData().copyFrom(oldProv.getData());
-                newProv.getStats().copyFrom(oldProv.getStats());
-                newProv.getDailyQuest().copyFrom(oldProv.getDailyQuest());
-            }
-        }
-    }
-
 }

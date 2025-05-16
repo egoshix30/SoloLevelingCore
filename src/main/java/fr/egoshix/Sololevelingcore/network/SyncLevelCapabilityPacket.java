@@ -46,14 +46,12 @@ public class SyncLevelCapabilityPacket {
             if (mc.player != null) {
                 LevelProvider prov = LevelCapability.get(mc.player);
                 if (prov != null) {
-                    // Extrait côté client
                     prov.getData().setLevel(level);
                     prov.getData().setXp(xp);
                     prov.getData().setTotalXpGained(totalXpGained);
                     prov.getStats().setMonstersKilled(monstersKilled);
                     prov.getStats().setTotalXpGained(totalXpGained);
                     prov.getStats().setMaxLevelReached(maxLevelReached);
-
                 }
             }
         });

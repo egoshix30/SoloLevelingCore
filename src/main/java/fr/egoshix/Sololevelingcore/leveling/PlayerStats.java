@@ -35,7 +35,7 @@ public class PlayerStats {
         this.maxLevelReached = other.maxLevelReached;
     }
 
-    public CompoundTag saveNBT() {
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("monstersKilled", this.monstersKilled);
         tag.putInt("totalXpGained", this.totalXpGained);
@@ -43,7 +43,7 @@ public class PlayerStats {
         return tag;
     }
 
-    public void loadNBT(CompoundTag tag) {
+    public void deserializeNBT(CompoundTag tag) {
         this.monstersKilled = tag.getInt("monstersKilled");
         this.totalXpGained = tag.getInt("totalXpGained");
         this.maxLevelReached = tag.getInt("maxLevelReached");

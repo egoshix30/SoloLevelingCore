@@ -57,7 +57,7 @@ public class DailyQuestData {
         this.lastGenerated = other.lastGenerated;
     }
 
-    public CompoundTag saveNBT() {
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("type", this.type == null ? -1 : this.type.ordinal());
         tag.putInt("progress", this.progress);
@@ -67,7 +67,7 @@ public class DailyQuestData {
         return tag;
     }
 
-    public void loadNBT(CompoundTag tag) {
+    public void deserializeNBT(CompoundTag tag) {
         int typeIndex = tag.getInt("type");
         this.type = (typeIndex < 0 || typeIndex >= QuestType.values().length) ? QuestType.NONE : QuestType.values()[typeIndex];
         this.progress = tag.getInt("progress");

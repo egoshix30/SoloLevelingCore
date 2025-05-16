@@ -13,9 +13,9 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = "sololevelingcore")
 public class LevelCapability {
 
-    public static Capability<LevelProvider> LEVEL = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final Capability<LevelProvider> LEVEL = CapabilityManager.get(new CapabilityToken<>() {});
 
-    public static ResourceLocation LEVEL_ID = new ResourceLocation("sololevelingcore:level");
+    public static final ResourceLocation LEVEL_ID = new ResourceLocation("sololevelingcore:level");
 
     @SubscribeEvent
     public static void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {

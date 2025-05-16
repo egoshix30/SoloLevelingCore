@@ -19,7 +19,6 @@ class HudAnimationState {
     public static int lastLevel = -1;
     public static int levelFlashTicks = 0;
 
-    // Particules
     public static class Particle {
         public float px, py, vx, vy, life, alpha;
         public int color;
@@ -34,7 +33,6 @@ class HudAnimationState {
 @Mod.EventBusSubscriber(modid = "sololevelingcore", value = Dist.CLIENT)
 public class SoloLevelingHudOverlay {
 
-    // Génère des particules de couleur sur la barre
     private static void spawnParticles(int barX, int barY, int width, int color, int n) {
         for (int i = 0; i < n; i++) {
             float px = barX + HudAnimationState.rand.nextFloat() * width;
@@ -76,7 +74,6 @@ public class SoloLevelingHudOverlay {
         int y = sh - 49;
         int xpBarY = y - 18;
 
-        // --- Animation et FLASH ---
         float targetHealth = (maxHealth > 0) ? (health / maxHealth) : 0;
         float targetXp = (xpNext > 0) ? ((float) xp / xpNext) : 1f;
 
@@ -91,44 +88,36 @@ public class SoloLevelingHudOverlay {
         else
             HudAnimationState.animXp = targetXp;
 
-        // Effet flash niveau up (HUD)
         if (HudAnimationState.lastLevel != level) {
-            HudAnimationState.levelFlashTicks = 18; // 18 ticks (~0.9s)
+            HudAnimationState.levelFlashTicks = 18;
             HudAnimationState.lastLevel = level;
-            // Spawn plus de particules flashy sur la barre d'xp
             spawnParticles(x, xpBarY, barWidth, 0xFF8C00FF, 20);
         }
 
         if (HudAnimationState.levelFlashTicks > 0) HudAnimationState.levelFlashTicks--;
 
-        // --- DESSIN POLISH & EFFETS ---
-        // Ombre et fond
         int shadow = 0x44000000;
         int fondLife = 0xD00D0B2E;
         int fondXp   = 0xD01C335A;
 
-        // FLASH de niveau
         if (HudAnimationState.levelFlashTicks > 0 && (HudAnimationState.levelFlashTicks % 4 < 2)) {
-            fondXp = 0xF0706DF7; // flash violet
+            fondXp = 0xF0706DF7;
         }
 
-        // BARRE DE VIE (smooth)
         int lifeAnimWidth = (int) (barWidth * HudAnimationState.animHealth);
         event.getGuiGraphics().fill(x - 2, y - 2, x + barWidth + 2, y + barHeight + 2, shadow);
         event.getGuiGraphics().fill(x, y, x + barWidth, y + barHeight, fondLife);
-        event.getGuiGraphics().fill(x, y, x + lifeAnimWidth, y + barHeight, 0xFFA43AFF); // violet animé
-        // Glow
+        event.getGuiGraphics().fill(x, y, x + lifeAnimWidth, y + barHeight, 0xFFA43AFF);
         if (lifeAnimWidth > 0)
             event.getGuiGraphics().fill(x, y + barHeight - 3, x + lifeAnimWidth, y + barHeight, 0x99B295FF);
 
         event.getGuiGraphics().drawString(mc.font, "PV: " + (int) health + "/" + (int) maxHealth,
                 x + 10, y + 2, 0xFFF3CFFF);
 
-        // BARRE XP
         int xpAnimWidth = (int) (barWidth * HudAnimationState.animXp);
         event.getGuiGraphics().fill(x - 2, xpBarY - 2, x + barWidth + 2, xpBarY + barHeight + 2, shadow);
         event.getGuiGraphics().fill(x, xpBarY, x + barWidth, xpBarY + barHeight, fondXp);
-        event.getGuiGraphics().fill(x, xpBarY, x + xpAnimWidth, xpBarY + barHeight, 0xFF00E3FF); // cyan flash animé
+        event.getGuiGraphics().fill(x, xpBarY, x + xpAnimWidth, xpBarY + barHeight, 0xFF00E3FF);
 
         if (xpAnimWidth > 0)
             event.getGuiGraphics().fill(x, xpBarY + barHeight - 3, x + xpAnimWidth, xpBarY + barHeight, 0x55C7F8FF);
@@ -137,24 +126,19 @@ public class SoloLevelingHudOverlay {
                 "XP: " + xp + "/" + xpNext + " | Niveau " + level,
                 x + 10, xpBarY + 2, 0xFFCAEDFF);
 
-        // --- PARTICULES/GLINTS animées sur la barre XP ---
-        // Génère des particules en continue sur la barre d'xp pour le "magique"
         if (HudAnimationState.rand.nextFloat() < 0.24f) {
             spawnParticles(x, xpBarY, xpAnimWidth, 0xFF00AFFF, 1 + HudAnimationState.rand.nextInt(2));
         }
-        // Et un peu sur la barre de vie
         if (HudAnimationState.rand.nextFloat() < 0.13f) {
             spawnParticles(x, y, lifeAnimWidth, 0xFFD37BFF, 1);
         }
 
-        // Update et draw particules
         java.util.Iterator<HudAnimationState.Particle> it = HudAnimationState.particles.iterator();
         while (it.hasNext()) {
             HudAnimationState.Particle p = it.next();
-            // Déplacement simple
             p.px += p.vx;
             p.py += p.vy;
-            p.vy -= 0.03f; // "chute"
+            p.vy -= 0.03f;
             p.life -= 1;
             if (p.life <= 0) { it.remove(); continue; }
             p.alpha = Math.max(0.08f, Math.min(1f, p.life / 16f));
@@ -164,7 +148,6 @@ public class SoloLevelingHudOverlay {
             );
         }
 
-        // Effet d'éclair/glow flash sur barre d'xp si tu montes de niveau
         if (HudAnimationState.levelFlashTicks > 0) {
             int alpha = (int) (120 + Math.sin(HudAnimationState.levelFlashTicks * 0.5f) * 80);
             int flashColor = (alpha << 24) | 0xC085FA;

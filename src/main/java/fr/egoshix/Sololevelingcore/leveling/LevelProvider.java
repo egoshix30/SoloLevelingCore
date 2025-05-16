@@ -23,7 +23,7 @@ public class LevelProvider implements ICapabilitySerializable<CompoundTag>, ICap
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable net.minecraft.core.Direction side) {
         if (cap == LevelCapability.LEVEL) {
-            return (LazyOptional<T>) holder;
+            return holder.cast();
         }
         return LazyOptional.empty();
     }
@@ -31,17 +31,17 @@ public class LevelProvider implements ICapabilitySerializable<CompoundTag>, ICap
     @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.put("levelData", data.saveNBT());
-        tag.put("playerStats", stats.saveNBT());
-        tag.put("dailyQuest", dailyQuest.saveNBT());
+        tag.put("levelData", data.serializeNBT());
+        tag.put("playerStats", stats.serializeNBT());
+        tag.put("dailyQuest", dailyQuest.serializeNBT());
         return tag;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        if (nbt.contains("levelData")) data.loadNBT(nbt.getCompound("levelData"));
-        if (nbt.contains("playerStats")) stats.loadNBT(nbt.getCompound("playerStats"));
-        if (nbt.contains("dailyQuest")) dailyQuest.loadNBT(nbt.getCompound("dailyQuest"));
+        if (nbt.contains("levelData")) data.deserializeNBT(nbt.getCompound("levelData"));
+        if (nbt.contains("playerStats")) stats.deserializeNBT(nbt.getCompound("playerStats"));
+        if (nbt.contains("dailyQuest")) dailyQuest.deserializeNBT(nbt.getCompound("dailyQuest"));
     }
 
     public static LevelProvider getSafe(Player player) {

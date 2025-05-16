@@ -10,9 +10,9 @@ public class LevelData {
     public int getLevel() { return level; }
     public int getXp() { return xp; }
     public int getTotalXpGained() { return totalXpGained; }
-    public void setLevel(int level) { this.level = level; }
-    public void setXp(int xp) { this.xp = xp; }
-    public void setTotalXpGained(int totalXpGained) { this.totalXpGained = totalXpGained; }
+    public void setLevel(int level) { this.level = Math.max(1, level); }
+    public void setXp(int xp) { this.xp = Math.max(0, xp); }
+    public void setTotalXpGained(int totalXpGained) { this.totalXpGained = Math.max(0, totalXpGained); }
 
     public void addXp(int amount) {
         this.xp += amount;
@@ -43,7 +43,7 @@ public class LevelData {
         this.totalXpGained = other.totalXpGained;
     }
 
-    public CompoundTag saveNBT() {
+    public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putInt("level", this.level);
         tag.putInt("xp", this.xp);
@@ -51,7 +51,7 @@ public class LevelData {
         return tag;
     }
 
-    public void loadNBT(CompoundTag tag) {
+    public void deserializeNBT(CompoundTag tag) {
         this.level = tag.getInt("level");
         this.xp = tag.getInt("xp");
         this.totalXpGained = tag.getInt("totalXpGained");
