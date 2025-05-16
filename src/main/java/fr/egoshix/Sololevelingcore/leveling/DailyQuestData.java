@@ -2,76 +2,77 @@ package fr.egoshix.Sololevelingcore.leveling;
 
 import net.minecraft.nbt.CompoundTag;
 
-import java.util.Random;
-
 public class DailyQuestData {
-    public enum QuestType { KILL_MOBS, GAIN_XP, REACH_LEVEL }
+    public enum QuestType { KILL_MOBS, GAIN_XP, REACH_LEVEL, NONE }
 
-    private QuestType type = QuestType.KILL_MOBS;
-    private int target = 10;
-    private int progress = 0;
-    private boolean completed = false;
-    private long lastGenerated = 0; // Timestamp en millisecondes (System.currentTimeMillis())
+    public QuestType type = QuestType.NONE;
+    public int progress = 0;
+    public int target = 0;
+    public boolean completed = false;
+    public long lastGenerated = 0L;
 
     public QuestType getType() { return type; }
-    public int getTarget() { return target; }
     public int getProgress() { return progress; }
+    public int getTarget() { return target; }
     public boolean isCompleted() { return completed; }
     public long getLastGenerated() { return lastGenerated; }
 
     public void addProgress(int amount) {
         if (!completed) {
-            progress += amount;
-            if (progress >= target) {
-                progress = target;
-                completed = true;
+            this.progress += amount;
+            if (this.progress >= target) {
+                this.progress = target;
+                this.completed = true;
             }
         }
     }
+
+    public void generateNewQuest(int playerLevel) {
+        this.type = QuestType.values()[1 + (int) (Math.random() * 3) % 3];
+        this.progress = 0;
+        switch (type) {
+            case KILL_MOBS -> this.target = 5 + (int)(Math.random() * 6);
+            case GAIN_XP -> this.target = 100 + (int)(Math.random() * 151);
+            case REACH_LEVEL -> this.target = Math.max(2, playerLevel + 1 + (int)(Math.random() * 3));
+            default -> this.target = 0;
+        }
+        this.completed = false;
+        this.lastGenerated = System.currentTimeMillis();
+    }
+
+    public void reset() {
+        this.type = QuestType.NONE;
+        this.progress = 0;
+        this.target = 0;
+        this.completed = false;
+        this.lastGenerated = 0L;
+    }
+
     public void copyFrom(DailyQuestData other) {
+        if (other == null) return;
         this.type = other.type;
         this.progress = other.progress;
         this.target = other.target;
         this.completed = other.completed;
         this.lastGenerated = other.lastGenerated;
-        // Ajoute d'autres champs si tu en ajoutes plus tard
-    }
-
-    public void generateNewQuest(int playerLevel) {
-        Random rand = new Random();
-        completed = false;
-        progress = 0;
-        lastGenerated = System.currentTimeMillis();
-        int t = rand.nextInt(3);
-        if (t == 0) {
-            type = QuestType.KILL_MOBS;
-            target = 10 + rand.nextInt(11); // 10 à 20 monstres à tuer
-        } else if (t == 1) {
-            type = QuestType.GAIN_XP;
-            target = 100 + rand.nextInt(201); // 100 à 300 XP à gagner
-        } else {
-            type = QuestType.REACH_LEVEL;
-            target = playerLevel + 1 + rand.nextInt(3); // Atteindre 1 à 3 niveaux de plus
-        }
     }
 
     public CompoundTag saveNBT() {
         CompoundTag tag = new CompoundTag();
-        tag.putInt("type", type.ordinal());
-        tag.putInt("target", target);
-        tag.putInt("progress", progress);
-        tag.putBoolean("completed", completed);
-        tag.putLong("lastGenerated", lastGenerated);
+        tag.putInt("type", this.type == null ? -1 : this.type.ordinal());
+        tag.putInt("progress", this.progress);
+        tag.putInt("target", this.target);
+        tag.putBoolean("completed", this.completed);
+        tag.putLong("lastGenerated", this.lastGenerated);
         return tag;
     }
 
     public void loadNBT(CompoundTag tag) {
-        type = QuestType.values()[tag.getInt("type")];
-        target = tag.getInt("target");
-        progress = tag.getInt("progress");
-        completed = tag.getBoolean("completed");
-        if (tag.contains("lastGenerated")) {
-            lastGenerated = tag.getLong("lastGenerated");
-        }
+        int typeIndex = tag.getInt("type");
+        this.type = (typeIndex < 0 || typeIndex >= QuestType.values().length) ? QuestType.NONE : QuestType.values()[typeIndex];
+        this.progress = tag.getInt("progress");
+        this.target = tag.getInt("target");
+        this.completed = tag.getBoolean("completed");
+        this.lastGenerated = tag.getLong("lastGenerated");
     }
 }

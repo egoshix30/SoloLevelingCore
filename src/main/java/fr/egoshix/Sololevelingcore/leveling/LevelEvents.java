@@ -3,6 +3,7 @@ package fr.egoshix.Sololevelingcore.leveling;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -20,9 +21,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 
-// AJOUT DE CET IMPORT :
-import fr.egoshix.Sololevelingcore.leveling.LevelUtils;
-
 @Mod.EventBusSubscriber(modid = "sololevelingcore")
 public class LevelEvents {
 
@@ -32,23 +30,6 @@ public class LevelEvents {
                 true
         );
     }
-
-    @SubscribeEvent
-    public static void onPlayerClone(PlayerEvent.Clone event) {
-        if (event.isWasDeath()) {
-            LevelProvider oldProv = LevelCapability.get(event.getOriginal());
-            LevelProvider newProv = LevelCapability.get(event.getEntity());
-            if (oldProv != null && newProv != null) {
-                if (oldProv.getData() != null && newProv.getData() != null)
-                    newProv.getData().copyFrom(oldProv.getData());
-                if (oldProv.getStats() != null && newProv.getStats() != null)
-                    newProv.getStats().copyFrom(oldProv.getStats());
-                if (oldProv.getDailyQuest() != null && newProv.getDailyQuest() != null)
-                    newProv.getDailyQuest().copyFrom(oldProv.getDailyQuest());
-            }
-        }
-    }
-
 
     private static final long ONE_DAY_MS = 24L * 60 * 60 * 1000; // 24h en millisecondes
 
@@ -79,7 +60,6 @@ public class LevelEvents {
 
             int xpAmount = 20;
             prov.getData().addXp(xpAmount);
-            LevelUtils.syncLevelToClient(player);
 
             prov.getStats().addMonsterKill();
             prov.getStats().addXp(xpAmount, prov.getData().getLevel());
@@ -90,7 +70,6 @@ public class LevelEvents {
                 if (quest.isCompleted()) {
                     player.sendSystemMessage(Component.literal("§dQuête journalière accomplie ! (Tuer des monstres)"));
                     prov.getData().addXp(quest.getTarget() * 3);
-                    LevelUtils.syncLevelToClient(player);
                     showXpActionBar(player, quest.getTarget() * 3);
                 }
             }
@@ -116,7 +95,6 @@ public class LevelEvents {
                     quest.addProgress(quest.getTarget());
                     player.sendSystemMessage(Component.literal("§dQuête journalière accomplie ! (Atteindre un niveau)"));
                     prov.getData().addXp(quest.getTarget() * 5);
-                    LevelUtils.syncLevelToClient(player);
                     showXpActionBar(player, quest.getTarget() * 5);
                 }
             }
@@ -153,7 +131,6 @@ public class LevelEvents {
             String oldRank = RankUtils.getRankFromLevel(oldLevel);
 
             prov.getData().addXp(xpAmount);
-            LevelUtils.syncLevelToClient(player);
             prov.getStats().addXp(xpAmount, prov.getData().getLevel());
 
             showXpActionBar(player, xpAmount);
@@ -178,7 +155,6 @@ public class LevelEvents {
                 if (quest.isCompleted()) {
                     player.sendSystemMessage(Component.literal("§dQuête journalière accomplie ! (Gagner de l’XP)"));
                     prov.getData().addXp(quest.getTarget() * 2);
-                    LevelUtils.syncLevelToClient(player);
                     showXpActionBar(player, quest.getTarget() * 2);
                 }
             }
@@ -187,7 +163,6 @@ public class LevelEvents {
                     quest.addProgress(quest.getTarget());
                     player.sendSystemMessage(Component.literal("§dQuête journalière accomplie ! (Atteindre un niveau)"));
                     prov.getData().addXp(quest.getTarget() * 5);
-                    LevelUtils.syncLevelToClient(player);
                     showXpActionBar(player, quest.getTarget() * 5);
                 }
             }
@@ -224,7 +199,6 @@ public class LevelEvents {
                                     String oldRank = RankUtils.getRankFromLevel(oldLevel);
 
                                     prov.getData().addXp(amount);
-                                    LevelUtils.syncLevelToClient(player);
                                     prov.getStats().addXp(amount, prov.getData().getLevel());
 
                                     DailyQuestData quest = prov.getDailyQuest();
@@ -233,7 +207,6 @@ public class LevelEvents {
                                         if (quest.isCompleted()) {
                                             player.sendSystemMessage(Component.literal("§dQuête journalière accomplie ! (Gagner de l’XP)"));
                                             prov.getData().addXp(quest.getTarget() * 2);
-                                            LevelUtils.syncLevelToClient(player);
                                             showXpActionBar(player, quest.getTarget() * 2);
                                         }
                                     }
@@ -242,7 +215,6 @@ public class LevelEvents {
                                             quest.addProgress(quest.getTarget());
                                             player.sendSystemMessage(Component.literal("§dQuête journalière accomplie ! (Atteindre un niveau)"));
                                             prov.getData().addXp(quest.getTarget() * 5);
-                                            LevelUtils.syncLevelToClient(player);
                                             showXpActionBar(player, quest.getTarget() * 5);
                                         }
                                     }
@@ -278,7 +250,6 @@ public class LevelEvents {
 
                             prov.getData().reset();
                             prov.getStats().reset();
-                            LevelUtils.syncLevelToClient(player);
                             RankBonusUtils.removeAllBonuses(player);
 
                             player.sendSystemMessage(Component.literal("§cTu es revenu au niveau 1 (reset Solo Leveling) !"));
@@ -349,11 +320,6 @@ public class LevelEvents {
         String rank = RankUtils.getRankFromLevel(data.getLevel());
         RankBonusUtils.applyBonusesForRank(player, rank);
 
-        // SYNC CAPABILITY AU LOGIN !
-        if (player instanceof ServerPlayer serverPlayer) {
-            LevelUtils.syncLevelToClient(serverPlayer);
-        }
-
         DailyQuestData quest = prov.getDailyQuest();
         long now = System.currentTimeMillis();
         if ((quest.isCompleted() && (now - quest.getLastGenerated() >= ONE_DAY_MS)) || quest.getTarget() == 0) {
@@ -361,4 +327,19 @@ public class LevelEvents {
             player.sendSystemMessage(Component.literal("§6Nouvelle quête journalière ! (/dailyquest pour voir ton objectif)"));
         }
     }
+
+    // 🟣 LA FIX QUI GÈRE LE CLONE (copie à la mort)
+    @SubscribeEvent
+    public static void onPlayerClone(net.minecraftforge.event.entity.player.PlayerEvent.Clone event) {
+        if (!event.getEntity().level().isClientSide()) {
+            LevelProvider oldProv = LevelCapability.get(event.getOriginal());
+            LevelProvider newProv = LevelCapability.get(event.getEntity());
+            if (oldProv != null && newProv != null) {
+                newProv.getData().copyFrom(oldProv.getData());
+                newProv.getStats().copyFrom(oldProv.getStats());
+                newProv.getDailyQuest().copyFrom(oldProv.getDailyQuest());
+            }
+        }
+    }
+
 }

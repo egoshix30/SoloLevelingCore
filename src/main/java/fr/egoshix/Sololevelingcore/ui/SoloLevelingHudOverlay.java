@@ -59,14 +59,14 @@ public class SoloLevelingHudOverlay {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        LevelProvider prov = LevelCapability.get(mc.player);
+        LevelProvider prov = LevelProvider.getSafe(mc.player);
         if (prov == null) return;
         var data = prov.getData();
 
         float health = mc.player.getHealth();
         float maxHealth = mc.player.getMaxHealth();
         int level = data.getLevel();
-        int xp = data.getXp();
+        int xp = prov.getData().getXp();
         int xpNext = data.xpForNextLevel();
 
         int sw = mc.getWindow().getGuiScaledWidth();
